@@ -310,7 +310,3 @@ su -c 'cat /data/adb/ptehook/ptehookd.log'
 # [2026-04-19 12:00:13] 2/2 hooks installed for com.target.app
 # [2026-04-19 12:00:13] [com.target.app] hooks active
 ```
-
-## 许可证
-
-见 [LICENSE](LICENSE)。
