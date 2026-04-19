@@ -1,0 +1,46 @@
+# Makefile for ptehookd + pte_scan (device-side ARM64 static binaries)
+#
+# Usage:
+#   make -f Makefile.ptehookd
+#   make -f Makefile.ptehookd NDK_DIR=/path/to/ndk
+#
+# Outputs:
+#   ptehookd   — on-device auto-hook daemon
+#   pte_scan   — ArtMethod scanner (already exists, rebuilt here for convenience)
+
+NDK_DIR  ?= $(HOME)/Android/Sdk/ndk/21.1.6352462/toolchains/llvm/prebuilt/linux-x86_64
+CC       := $(NDK_DIR)/bin/aarch64-linux-android29-clang
+
+CFLAGS   := -O2 -Wall -static
+
+.PHONY: all clean push
+
+all: ptehookd pte_scan
+
+ptehookd: ptehookd.c shellcode_patch.h
+	$(CC) $(CFLAGS) -o $@ ptehookd.c
+
+pte_scan: device_scanner.c
+	$(CC) $(CFLAGS) -o $@ device_scanner.c
+
+clean:
+	rm -f ptehookd pte_scan
+
+# Push to device (requires ADB)
+push: ptehookd pte_scan
+	adb push ptehookd /data/adb/ptehook/ptehookd
+	adb push pte_scan /data/adb/ptehook/pte_scan
+	adb shell "su -c 'chmod 755 /data/adb/ptehook/ptehookd /data/adb/ptehook/pte_scan'"
+	@echo "[+] pushed to /data/adb/ptehook/"
+
+# Package APatch module zip
+MODULE_ZIP := ptehook-module.zip
+module: ptehookd pte_scan
+	@mkdir -p /tmp/ptehook_mod/data
+	@cp ptehookd pte_scan /tmp/ptehook_mod/data/
+	@cp ../apatch_module/module.prop /tmp/ptehook_mod/
+	@cp ../apatch_module/service.sh /tmp/ptehook_mod/
+	@cp ../apatch_module/customize.sh /tmp/ptehook_mod/
+	@cd /tmp/ptehook_mod && zip -r /tmp/$(MODULE_ZIP) . > /dev/null
+	@echo "[+] module zip: /tmp/$(MODULE_ZIP)"
+	@rm -rf /tmp/ptehook_mod

@@ -1,0 +1,6 @@
+id=ptehook
+name=ptehook - PTE-level Stealth Hook
+version=v1.0.0
+versionCode=100
+author=ptehook-dev
+description=Kernel-level stealth hook framework with on-device auto-hook daemon. Zero byte modification, zero .so injection, zero VMA footprint.
